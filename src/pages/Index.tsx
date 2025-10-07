@@ -2,8 +2,11 @@ import { ArrowRight, Activity, Apple, TrendingUp, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import heroImage from "@/assets/hero-fitness.jpg";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
+  const navigate = useNavigate();
+  
   const features = [
     {
       icon: Apple,
@@ -49,7 +52,12 @@ const Index = () => {
                 Your all-in-one solution for a healthier lifestyle.
               </p>
               <div className="flex flex-col gap-4 sm:flex-row justify-center lg:justify-start">
-                <Button variant="hero" size="xl" className="group bg-primary-foreground text-primary hover:bg-primary-foreground/90">
+                <Button 
+                  variant="hero" 
+                  size="xl" 
+                  className="group bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+                  onClick={() => navigate("/auth")}
+                >
                   Get Started Free
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </Button>
@@ -57,6 +65,9 @@ const Index = () => {
                   variant="outline" 
                   size="xl" 
                   className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10 backdrop-blur-sm"
+                  onClick={() => {
+                    document.querySelector('#features')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
                 >
                   Learn More
                 </Button>
@@ -75,7 +86,7 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-background">
+      <section id="features" className="py-20 bg-background">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16 space-y-4">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
@@ -121,7 +132,12 @@ const Index = () => {
                 Join thousands of users who are already tracking their way to better health with FitTrackr.
               </p>
               <div className="flex flex-col gap-4 sm:flex-row justify-center">
-                <Button variant="hero" size="xl" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
+                <Button 
+                  variant="hero" 
+                  size="xl" 
+                  className="bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+                  onClick={() => navigate("/auth")}
+                >
                   Start Tracking Now
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
