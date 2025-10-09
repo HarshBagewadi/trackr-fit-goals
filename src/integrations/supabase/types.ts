@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      meals: {
+        Row: {
+          calories: number
+          carbs: number
+          consumed_at: string
+          created_at: string
+          fat: number
+          id: string
+          meal_name: string
+          meal_type: string | null
+          protein: number
+          user_id: string
+        }
+        Insert: {
+          calories: number
+          carbs: number
+          consumed_at?: string
+          created_at?: string
+          fat: number
+          id?: string
+          meal_name: string
+          meal_type?: string | null
+          protein: number
+          user_id: string
+        }
+        Update: {
+          calories?: number
+          carbs?: number
+          consumed_at?: string
+          created_at?: string
+          fat?: number
+          id?: string
+          meal_name?: string
+          meal_type?: string | null
+          protein?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           activity_level: string | null
