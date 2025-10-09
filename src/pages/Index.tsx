@@ -1,11 +1,23 @@
+import { useEffect } from "react";
 import { ArrowRight, Activity, Apple, TrendingUp, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import heroImage from "@/assets/hero-fitness.jpg";
 import { useNavigate } from "react-router-dom";
+import { getAuthState } from "@/lib/auth";
 
 const Index = () => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { user } = await getAuthState();
+      if (user) {
+        navigate("/dashboard");
+      }
+    };
+    checkAuth();
+  }, [navigate]);
   
   const features = [
     {

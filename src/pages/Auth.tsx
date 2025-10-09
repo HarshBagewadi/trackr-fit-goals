@@ -28,7 +28,7 @@ const Auth = () => {
     const checkAuth = async () => {
       const { user } = await getAuthState();
       if (user) {
-        navigate("/");
+        navigate("/dashboard");
       }
     };
     checkAuth();
@@ -58,7 +58,7 @@ const Auth = () => {
           title: "Welcome back!",
           description: "You've successfully logged in.",
         });
-        navigate("/");
+        navigate("/dashboard");
       }
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -98,7 +98,7 @@ const Auth = () => {
           title: "Account created!",
           description: "Welcome to FitTrackr. You can now start tracking.",
         });
-        navigate("/");
+        navigate("/dashboard");
       }
     } catch (err) {
       if (err instanceof z.ZodError) {
