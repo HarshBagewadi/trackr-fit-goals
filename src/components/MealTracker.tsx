@@ -40,6 +40,7 @@ interface MealTrackerProps {
 
 export function MealTracker({ userId, dailyCalorieGoal }: MealTrackerProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [meals, setMeals] = useState<Meal[]>([]);
   const [showForm, setShowForm] = useState(false);
   const { toast } = useToast();
@@ -50,6 +51,40 @@ export function MealTracker({ userId, dailyCalorieGoal }: MealTrackerProps) {
       meal_type: "breakfast",
     },
   });
+
+  const analyzeFoodDescription = async (description: string) => {
+    if (!description.trim()) return;
+    
+    setIsAnalyzing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-nutrition', {
+        body: { foodDescription: description }
+      });
+
+      if (error) throw error;
+
+      if (data) {
+        form.setValue('calories', data.calories.toString());
+        form.setValue('protein', data.protein.toString());
+        form.setValue('carbs', data.carbs.toString());
+        form.setValue('fat', data.fat.toString());
+        
+        toast({
+          title: "Nutrition analyzed!",
+          description: data.serving_description || "Nutritional values have been calculated.",
+        });
+      }
+    } catch (error: any) {
+      console.error('Nutrition analysis error:', error);
+      toast({
+        title: "Analysis failed",
+        description: "Could not analyze the food. Please enter values manually.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   const fetchTodaysMeals = async () => {
     const today = new Date();
@@ -203,9 +238,21 @@ export function MealTracker({ userId, dailyCalorieGoal }: MealTrackerProps) {
                   name="meal_name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Meal Name</FormLabel>
+                      <FormLabel>Meal Description</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Chicken breast with rice" {...field} />
+                        <div className="flex gap-2">
+                          <Input 
+                            placeholder="e.g., 2 chicken breasts with 1 cup of rice" 
+                            {...field}
+                          />
+                          <Button 
+                            type="button" 
+                            onClick={() => analyzeFoodDescription(field.value)}
+                            disabled={isAnalyzing || !field.value}
+                          >
+                            {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Analyze"}
+                          </Button>
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -295,7 +342,7 @@ export function MealTracker({ userId, dailyCalorieGoal }: MealTrackerProps) {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button type="submit" disabled={isLoading}>
+                  <Button type="submit" disabled={isLoading || isAnalyzing}>
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Add Meal
                   </Button>
@@ -303,6 +350,9 @@ export function MealTracker({ userId, dailyCalorieGoal }: MealTrackerProps) {
                     Cancel
                   </Button>
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  Tip: Enter a food description and click "Analyze" to auto-calculate nutrition values
+                </p>
               </form>
             </Form>
           </CardContent>
