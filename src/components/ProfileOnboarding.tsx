@@ -16,7 +16,7 @@ const onboardingSchema = z.object({
   height: z.string().min(1, "Height is required").transform(Number),
   age: z.string().min(1, "Age is required").transform(Number),
   gender: z.enum(["male", "female", "other"]),
-  goal: z.enum(["bulk", "cut", "maintain", "fitness"]),
+  goal: z.enum(["lose", "maintain", "gain"]),
   activity_level: z.enum(["sedentary", "light", "moderate", "active", "very_active"]),
 });
 
@@ -56,8 +56,8 @@ export function ProfileOnboarding({ userId, onComplete }: ProfileOnboardingProps
     const tdee = bmr * activityMultipliers[data.activity_level];
 
     // Adjust based on goal
-    if (data.goal === "bulk") return Math.round(tdee + 300);
-    if (data.goal === "cut") return Math.round(tdee - 500);
+    if (data.goal === "gain") return Math.round(tdee + 300);
+    if (data.goal === "lose") return Math.round(tdee - 500);
     return Math.round(tdee);
   };
 
@@ -188,10 +188,9 @@ export function ProfileOnboarding({ userId, onComplete }: ProfileOnboardingProps
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="bulk">Bulk (Gain Weight)</SelectItem>
-                        <SelectItem value="cut">Cut (Lose Weight)</SelectItem>
+                        <SelectItem value="lose">Lose Weight</SelectItem>
                         <SelectItem value="maintain">Maintain Weight</SelectItem>
-                        <SelectItem value="fitness">General Fitness</SelectItem>
+                        <SelectItem value="gain">Gain Weight</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

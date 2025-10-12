@@ -37,6 +37,39 @@ export default function Profile() {
     checkAuth();
   }, [navigate]);
 
+  const calculateCalorieGoal = (
+    weight: number,
+    height: number,
+    age: number,
+    gender: string,
+    activityLevel: string,
+    goal: string
+  ) => {
+    // BMR calculation using Mifflin-St Jeor Equation
+    let bmr;
+    if (gender === "male") {
+      bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+    } else {
+      bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+    }
+
+    // Activity multipliers
+    const activityMultipliers: { [key: string]: number } = {
+      sedentary: 1.2,
+      light: 1.375,
+      moderate: 1.55,
+      active: 1.725,
+      very_active: 1.9,
+    };
+
+    const tdee = bmr * (activityMultipliers[activityLevel] || 1.2);
+
+    // Adjust based on goal
+    if (goal === "gain") return Math.round(tdee + 300);
+    if (goal === "lose") return Math.round(tdee - 500);
+    return Math.round(tdee);
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
@@ -50,7 +83,20 @@ export default function Profile() {
       weight: parseFloat(formData.get("weight") as string) || null,
       activity_level: formData.get("activity_level") as string,
       goal: formData.get("goal") as string,
+      daily_calorie_goal: 0, // Will be calculated below
     };
+
+    // Calculate the calorie goal
+    if (updates.weight && updates.height && updates.age && updates.gender && updates.activity_level && updates.goal) {
+      updates.daily_calorie_goal = calculateCalorieGoal(
+        updates.weight,
+        updates.height,
+        updates.age,
+        updates.gender,
+        updates.activity_level,
+        updates.goal
+      );
+    }
 
     const { error } = await supabase
       .from("profiles")
@@ -66,7 +112,7 @@ export default function Profile() {
     } else {
       toast({
         title: "Profile updated",
-        description: "Your profile has been successfully updated.",
+        description: `Your daily calorie goal is ${updates.daily_calorie_goal} calories.`,
       });
       setProfile({ ...profile, ...updates });
     }
