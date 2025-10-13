@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Plus, Trash2 } from "lucide-react";
+import { format } from "date-fns";
 
 const mealSchema = z.object({
   meal_name: z.string().min(1, "Meal name is required"),
@@ -36,9 +37,10 @@ interface Meal {
 interface MealTrackerProps {
   userId: string;
   dailyCalorieGoal: number;
+  selectedDate: Date;
 }
 
-export function MealTracker({ userId, dailyCalorieGoal }: MealTrackerProps) {
+export function MealTracker({ userId, dailyCalorieGoal, selectedDate }: MealTrackerProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [meals, setMeals] = useState<Meal[]>([]);
@@ -86,15 +88,19 @@ export function MealTracker({ userId, dailyCalorieGoal }: MealTrackerProps) {
     }
   };
 
-  const fetchTodaysMeals = async () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  const fetchMeals = async () => {
+    const startOfDay = new Date(selectedDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    const endOfDay = new Date(selectedDate);
+    endOfDay.setHours(23, 59, 59, 999);
 
     const { data, error } = await supabase
       .from("meals")
       .select("*")
       .eq("user_id", userId)
-      .gte("consumed_at", today.toISOString())
+      .gte("consumed_at", startOfDay.toISOString())
+      .lte("consumed_at", endOfDay.toISOString())
       .order("consumed_at", { ascending: false });
 
     if (error) {
@@ -110,8 +116,8 @@ export function MealTracker({ userId, dailyCalorieGoal }: MealTrackerProps) {
   };
 
   useEffect(() => {
-    fetchTodaysMeals();
-  }, [userId]);
+    fetchMeals();
+  }, [userId, selectedDate]);
 
   const onSubmit = async (data: MealFormData) => {
     setIsLoading(true);
@@ -135,7 +141,7 @@ export function MealTracker({ userId, dailyCalorieGoal }: MealTrackerProps) {
 
       form.reset();
       setShowForm(false);
-      fetchTodaysMeals();
+      fetchMeals();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -157,7 +163,7 @@ export function MealTracker({ userId, dailyCalorieGoal }: MealTrackerProps) {
         title: "Meal deleted",
       });
 
-      fetchTodaysMeals();
+      fetchMeals();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -184,10 +190,10 @@ export function MealTracker({ userId, dailyCalorieGoal }: MealTrackerProps) {
       {/* Daily Summary */}
       <Card>
         <CardHeader>
-          <CardTitle>Today's Progress</CardTitle>
+          <CardTitle>Nutrition Progress</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <p className="text-sm text-muted-foreground">Calories</p>
               <p className="text-2xl font-bold">{totals.calories}</p>
@@ -195,20 +201,16 @@ export function MealTracker({ userId, dailyCalorieGoal }: MealTrackerProps) {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Protein</p>
-              <p className="text-2xl font-bold">{totals.protein}g</p>
+              <p className="text-2xl font-bold text-blue-500">{totals.protein}g</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Carbs</p>
-              <p className="text-2xl font-bold">{totals.carbs}g</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Fat</p>
-              <p className="text-2xl font-bold">{totals.fat}g</p>
+              <p className="text-2xl font-bold text-orange-500">{totals.carbs}g</p>
             </div>
           </div>
           <div className="mt-4">
             <p className="text-sm">
-              <span className={remaining >= 0 ? "text-success" : "text-destructive"}>
+              <span className={remaining >= 0 ? "text-green-500" : "text-destructive"}>
                 {Math.abs(remaining)} calories {remaining >= 0 ? "remaining" : "over goal"}
               </span>
             </p>
@@ -363,7 +365,7 @@ export function MealTracker({ userId, dailyCalorieGoal }: MealTrackerProps) {
       {meals.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Today's Meals</CardTitle>
+            <CardTitle>Meals for {format(selectedDate, "MMM d, yyyy")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">

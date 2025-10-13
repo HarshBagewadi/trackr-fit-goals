@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      exercises: {
+        Row: {
+          calories_burnt: number
+          created_at: string
+          duration: number
+          exercise_date: string
+          exercise_name: string
+          exercise_type: string | null
+          id: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          calories_burnt: number
+          created_at?: string
+          duration: number
+          exercise_date?: string
+          exercise_name: string
+          exercise_type?: string | null
+          id?: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          calories_burnt?: number
+          created_at?: string
+          duration?: number
+          exercise_date?: string
+          exercise_name?: string
+          exercise_type?: string | null
+          id?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       meals: {
         Row: {
           calories: number
@@ -92,6 +128,36 @@ export type Database = {
           name?: string
           updated_at?: string | null
           weight?: number | null
+        }
+        Relationships: []
+      }
+      sleep_logs: {
+        Row: {
+          created_at: string
+          hours_slept: number
+          id: string
+          notes: string | null
+          sleep_date: string
+          sleep_quality: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          hours_slept: number
+          id?: string
+          notes?: string | null
+          sleep_date?: string
+          sleep_quality?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          hours_slept?: number
+          id?: string
+          notes?: string | null
+          sleep_date?: string
+          sleep_quality?: string | null
+          user_id?: string
         }
         Relationships: []
       }

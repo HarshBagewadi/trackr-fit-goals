@@ -3,13 +3,26 @@ import { useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { ProfileOnboarding } from "@/components/ProfileOnboarding";
 import { MealTracker } from "@/components/MealTracker";
+import { ExerciseTracker } from "@/components/ExerciseTracker";
+import { SleepTracker } from "@/components/SleepTracker";
+import { MotivationalQuotes } from "@/components/MotivationalQuotes";
+import { RecipeIdeas } from "@/components/RecipeIdeas";
+import { HealthTips } from "@/components/HealthTips";
+import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 import { getAuthState } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const navigate = useNavigate();
 
   const calculateCalorieGoal = (profile: any) => {
@@ -105,22 +118,75 @@ export default function Dashboard() {
       <main className="container mx-auto px-4 py-8">
         <div className="space-y-8">
           {/* Welcome Section */}
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              Welcome back, {profile?.name || "User"}!
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              {isProfileComplete 
-                ? "Track your nutrition and reach your fitness goals"
-                : "Let's get your profile set up"}
-            </p>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">
+                Welcome back, {profile?.name || "User"}!
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                {isProfileComplete 
+                  ? "Track your nutrition and reach your fitness goals"
+                  : "Let's get your profile set up"}
+              </p>
+            </div>
+
+            {/* Date Selector */}
+            {isProfileComplete && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[280px] justify-start text-left font-normal",
+                      !selectedDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => date && setSelectedDate(date)}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            )}
           </div>
 
-          {/* Show onboarding or meal tracker based on profile completion */}
+          {/* Show onboarding or dashboard content based on profile completion */}
           {!isProfileComplete ? (
             <ProfileOnboarding userId={user.id} onComplete={handleOnboardingComplete} />
           ) : (
-            <MealTracker userId={user.id} dailyCalorieGoal={profile.daily_calorie_goal || 2000} />
+            <div className="grid gap-6">
+              {/* Motivational Quote */}
+              <MotivationalQuotes />
+
+              {/* Main Content Grid */}
+              <div className="grid lg:grid-cols-3 gap-6">
+                {/* Left Column - Nutrition & Exercise */}
+                <div className="lg:col-span-2 space-y-6">
+                  <MealTracker 
+                    userId={user.id} 
+                    dailyCalorieGoal={profile.daily_calorie_goal || 2000}
+                    selectedDate={selectedDate}
+                  />
+                  
+                  <ExerciseTracker userId={user.id} selectedDate={selectedDate} />
+                </div>
+
+                {/* Right Column - Sleep, Recipes & Tips */}
+                <div className="space-y-6">
+                  <SleepTracker userId={user.id} selectedDate={selectedDate} />
+                  <RecipeIdeas />
+                  <HealthTips />
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </main>
