@@ -173,6 +173,7 @@ export default function Dashboard() {
                   <MealTracker 
                     userId={user.id} 
                     dailyCalorieGoal={profile.daily_calorie_goal || 2000}
+                    dailyProteinGoal={profile.weight ? Math.round(profile.weight * 2) : 150}
                     selectedDate={selectedDate}
                   />
                   

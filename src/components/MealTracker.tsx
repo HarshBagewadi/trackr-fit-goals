@@ -37,10 +37,11 @@ interface Meal {
 interface MealTrackerProps {
   userId: string;
   dailyCalorieGoal: number;
+  dailyProteinGoal: number;
   selectedDate: Date;
 }
 
-export function MealTracker({ userId, dailyCalorieGoal, selectedDate }: MealTrackerProps) {
+export function MealTracker({ userId, dailyCalorieGoal, dailyProteinGoal, selectedDate }: MealTrackerProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [meals, setMeals] = useState<Meal[]>([]);
@@ -183,7 +184,8 @@ export function MealTracker({ userId, dailyCalorieGoal, selectedDate }: MealTrac
     { calories: 0, protein: 0, carbs: 0, fat: 0 }
   );
 
-  const remaining = dailyCalorieGoal - totals.calories;
+  const caloriesRemaining = dailyCalorieGoal - totals.calories;
+  const proteinRemaining = dailyProteinGoal - totals.protein;
 
   return (
     <div className="space-y-6">
@@ -198,22 +200,27 @@ export function MealTracker({ userId, dailyCalorieGoal, selectedDate }: MealTrac
               <p className="text-sm text-muted-foreground">Calories</p>
               <p className="text-2xl font-bold">{totals.calories}</p>
               <p className="text-xs text-muted-foreground">of {dailyCalorieGoal}</p>
+              <p className="text-xs mt-1">
+                <span className={caloriesRemaining >= 0 ? "text-green-500" : "text-destructive"}>
+                  {Math.abs(caloriesRemaining)} {caloriesRemaining >= 0 ? "left" : "over"}
+                </span>
+              </p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Protein</p>
               <p className="text-2xl font-bold text-blue-500">{totals.protein}g</p>
+              <p className="text-xs text-muted-foreground">of {dailyProteinGoal}g</p>
+              <p className="text-xs mt-1">
+                <span className={proteinRemaining >= 0 ? "text-green-500" : "text-blue-500"}>
+                  {Math.abs(proteinRemaining)}g {proteinRemaining >= 0 ? "left" : "over"}
+                </span>
+              </p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Carbs</p>
               <p className="text-2xl font-bold text-orange-500">{totals.carbs}g</p>
+              <p className="text-xs text-muted-foreground">Tracked</p>
             </div>
-          </div>
-          <div className="mt-4">
-            <p className="text-sm">
-              <span className={remaining >= 0 ? "text-green-500" : "text-destructive"}>
-                {Math.abs(remaining)} calories {remaining >= 0 ? "remaining" : "over goal"}
-              </span>
-            </p>
           </div>
         </CardContent>
       </Card>
