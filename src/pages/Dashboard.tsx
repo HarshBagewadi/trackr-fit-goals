@@ -6,8 +6,8 @@ import { MealTracker } from "@/components/MealTracker";
 import { ExerciseTracker } from "@/components/ExerciseTracker";
 import { SleepTracker } from "@/components/SleepTracker";
 import { MotivationalQuotes } from "@/components/MotivationalQuotes";
-import { RecipeIdeas } from "@/components/RecipeIdeas";
 import { HealthTips } from "@/components/HealthTips";
+import { FitnessChat } from "@/components/FitnessChat";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -180,11 +180,11 @@ export default function Dashboard() {
                   <ExerciseTracker userId={user.id} selectedDate={selectedDate} />
                 </div>
 
-                {/* Right Column - Sleep, Recipes & Tips */}
+                {/* Right Column - Sleep, Tips & AI Chat */}
                 <div className="space-y-6">
                   <SleepTracker userId={user.id} selectedDate={selectedDate} />
-                  <RecipeIdeas />
                   <HealthTips />
+                  <FitnessChat />
                 </div>
               </div>
             </div>

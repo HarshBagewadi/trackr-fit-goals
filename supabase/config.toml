@@ -2,3 +2,6 @@ project_id = "azssnqajrkgjyhwzewri"
 
 [functions.analyze-nutrition]
 verify_jwt = false
+
+[functions.fitness-chat]
+verify_jwt = true
