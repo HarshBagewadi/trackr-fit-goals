@@ -9,13 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, Flame } from "lucide-react";
+import { Loader2, Plus, Trash2, Flame, Calculator } from "lucide-react";
 import { format } from "date-fns";
 
 const exerciseSchema = z.object({
   exercise_name: z.string().min(1, "Exercise name is required"),
   exercise_type: z.string().optional(),
-  calories_burnt: z.string().min(1, "Calories burnt required").transform(Number),
+  calories_burnt: z.string().optional().transform(val => val ? Number(val) : undefined),
   duration: z.string().min(1, "Duration required").transform(Number),
   notes: z.string().optional(),
 });
@@ -39,6 +39,7 @@ interface ExerciseTrackerProps {
 
 export function ExerciseTracker({ userId, selectedDate }: ExerciseTrackerProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [showForm, setShowForm] = useState(false);
   const { toast } = useToast();
@@ -73,7 +74,59 @@ export function ExerciseTracker({ userId, selectedDate }: ExerciseTrackerProps) 
     fetchExercises();
   }, [userId, selectedDate]);
 
+  const analyzeExercise = async () => {
+    const exerciseName = form.getValues("exercise_name");
+    const exerciseType = form.getValues("exercise_type");
+    const duration = form.getValues("duration");
+
+    if (!exerciseName || !duration) {
+      toast({
+        title: "Missing information",
+        description: "Please enter exercise name and duration first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAnalyzing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("analyze-exercise", {
+        body: {
+          exerciseName,
+          exerciseType,
+          duration,
+        },
+      });
+
+      if (error) throw error;
+
+      form.setValue("calories_burnt", data.caloriesBurned.toString());
+      
+      toast({
+        title: "Calories calculated!",
+        description: data.exerciseInfo,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Analysis failed",
+        description: error.message || "Could not calculate calories",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   const onSubmit = async (data: ExerciseFormData) => {
+    if (!data.calories_burnt) {
+      toast({
+        title: "Missing calories",
+        description: "Please click Analyze to calculate calories burned",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const { error } = await supabase.from("exercises").insert({
@@ -219,35 +272,59 @@ export function ExerciseTracker({ userId, selectedDate }: ExerciseTrackerProps) 
                   )}
                 />
 
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="calories_burnt"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Calories Burnt</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="1" placeholder="250" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <FormField
+                  control={form.control}
+                  name="duration"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Duration (minutes)</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="1" placeholder="30" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                  <FormField
-                    control={form.control}
-                    name="duration"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Duration (min)</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="1" placeholder="30" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={analyzeExercise}
+                  disabled={isAnalyzing}
+                  className="w-full"
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <Calculator className="mr-2 h-4 w-4" />
+                      Analyze & Calculate Calories
+                    </>
+                  )}
+                </Button>
+
+                <FormField
+                  control={form.control}
+                  name="calories_burnt"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Calories Burnt</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          step="1" 
+                          placeholder="Click Analyze above" 
+                          {...field}
+                          readOnly 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <FormField
                   control={form.control}
