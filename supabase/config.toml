@@ -4,7 +4,7 @@ project_id = "azssnqajrkgjyhwzewri"
 verify_jwt = false
 
 [functions.analyze-exercise]
-verify_jwt = true
+verify_jwt = false
 
 [functions.fitness-chat]
 verify_jwt = true

@@ -99,13 +99,14 @@ serve(async (req) => {
     // Get the authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      console.error('Missing authorization header');
       return new Response(
         JSON.stringify({ error: "Missing authorization header" }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Create Supabase client with the user's auth token
+    // Create Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -118,13 +119,21 @@ serve(async (req) => {
       }
     );
 
-    // Get the authenticated user
+    // Get the authenticated user using the provided token
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     
-    if (userError || !user) {
+    if (userError) {
       console.error('Auth error:', userError);
       return new Response(
-        JSON.stringify({ error: "Authentication failed" }),
+        JSON.stringify({ error: "Authentication failed: " + userError.message }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!user) {
+      console.error('No user found');
+      return new Response(
+        JSON.stringify({ error: "User not found" }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
