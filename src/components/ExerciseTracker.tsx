@@ -90,15 +90,28 @@ export function ExerciseTracker({ userId, selectedDate }: ExerciseTrackerProps) 
 
     setIsAnalyzing(true);
     try {
+      // Get the current session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error("Please log in to analyze exercises");
+      }
+
       const { data, error } = await supabase.functions.invoke("analyze-exercise", {
         body: {
           exerciseName,
           exerciseType,
           duration,
         },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Function error:', error);
+        throw error;
+      }
 
       form.setValue("calories_burnt", data.caloriesBurned.toString());
       
@@ -107,6 +120,7 @@ export function ExerciseTracker({ userId, selectedDate }: ExerciseTrackerProps) 
         description: data.exerciseInfo,
       });
     } catch (error: any) {
+      console.error('Analysis error:', error);
       toast({
         title: "Analysis failed",
         description: error.message || "Could not calculate calories",
