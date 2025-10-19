@@ -14,23 +14,44 @@ serve(async (req) => {
   try {
     const { messages } = await req.json();
     
-    const authHeader = req.headers.get('Authorization')!;
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('Missing authorization header');
+      return new Response(
+        JSON.stringify({ error: "Missing authorization header" }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Extract JWT token and decode to get user ID
+    const token = authHeader.replace('Bearer ', '');
+    let userId: string;
+    
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      userId = payload.sub;
+      if (!userId) throw new Error('No user ID in token');
+      console.log('Authenticated user:', userId);
+    } catch (error) {
+      console.error('Token decode error:', error);
+      return new Response(
+        JSON.stringify({ error: "Invalid token format" }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Create Supabase client with service role to bypass RLS
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
-
-    // Get current user
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
 
     // Fetch user data for context
     const [profileRes, mealsRes, exercisesRes, sleepRes] = await Promise.all([
-      supabaseClient.from('profiles').select('*').eq('id', user.id).single(),
-      supabaseClient.from('meals').select('*').eq('user_id', user.id).gte('consumed_at', new Date(new Date().setHours(0,0,0,0)).toISOString()).order('consumed_at', { ascending: false }),
-      supabaseClient.from('exercises').select('*').eq('user_id', user.id).gte('exercise_date', new Date().toISOString().split('T')[0]).order('created_at', { ascending: false }),
-      supabaseClient.from('sleep_logs').select('*').eq('user_id', user.id).order('sleep_date', { ascending: false }).limit(7)
+      supabaseClient.from('profiles').select('*').eq('id', userId).single(),
+      supabaseClient.from('meals').select('*').eq('user_id', userId).gte('consumed_at', new Date(new Date().setHours(0,0,0,0)).toISOString()).order('consumed_at', { ascending: false }),
+      supabaseClient.from('exercises').select('*').eq('user_id', userId).gte('exercise_date', new Date().toISOString().split('T')[0]).order('created_at', { ascending: false }),
+      supabaseClient.from('sleep_logs').select('*').eq('user_id', userId).order('sleep_date', { ascending: false }).limit(7)
     ]);
 
     const profile = profileRes.data;
