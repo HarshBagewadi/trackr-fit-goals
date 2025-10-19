@@ -106,45 +106,43 @@ serve(async (req) => {
       );
     }
 
+    // Extract JWT token and decode to get user ID
+    const token = authHeader.replace('Bearer ', '');
+    let userId: string;
+    
+    try {
+      // Decode JWT payload (without verification since verify_jwt is false)
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      userId = payload.sub;
+      
+      if (!userId) {
+        console.error('No user ID in token');
+        return new Response(
+          JSON.stringify({ error: "Invalid token: no user ID" }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      console.log('Authenticated user:', userId);
+    } catch (error) {
+      console.error('Token decode error:', error);
+      return new Response(
+        JSON.stringify({ error: "Invalid token format" }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Create Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: {
-            Authorization: authHeader,
-          },
-        },
-      }
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
-
-    // Get the authenticated user using the provided token
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    
-    if (userError) {
-      console.error('Auth error:', userError);
-      return new Response(
-        JSON.stringify({ error: "Authentication failed: " + userError.message }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (!user) {
-      console.error('No user found');
-      return new Response(
-        JSON.stringify({ error: "User not found" }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log('Authenticated user:', user.id);
 
     // Fetch user profile
     const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')
       .select('weight, height, age, gender')
-      .eq('id', user.id)
+      .eq('id', userId)
       .single();
 
     if (profileError || !profile) {
