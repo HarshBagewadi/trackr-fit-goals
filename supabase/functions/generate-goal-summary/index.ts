@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { userInput } = await req.json();
+    await req.json();
     
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -46,38 +46,62 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Fetch user profile for additional context
-    const { data: profile } = await supabaseClient
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    // Fetch user data
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    
+    const [profileResult, mealsResult, exercisesResult, sleepResult] = await Promise.all([
+      supabaseClient.from('profiles').select('*').eq('id', userId).single(),
+      supabaseClient.from('meals').select('*').eq('user_id', userId).gte('consumed_at', weekAgo).order('consumed_at', { ascending: false }),
+      supabaseClient.from('exercises').select('*').eq('user_id', userId).gte('exercise_date', weekAgo).order('exercise_date', { ascending: false }),
+      supabaseClient.from('sleep_logs').select('*').eq('user_id', userId).gte('sleep_date', weekAgo).order('sleep_date', { ascending: false })
+    ]);
+
+    const profile = profileResult.data;
+    const meals = mealsResult.data || [];
+    const exercises = exercisesResult.data || [];
+    const sleepLogs = sleepResult.data || [];
+
+    // Calculate totals
+    const totalCalories = meals.reduce((sum, meal) => sum + Number(meal.calories), 0);
+    const totalProtein = meals.reduce((sum, meal) => sum + Number(meal.protein), 0);
+    const totalExerciseMinutes = exercises.reduce((sum, ex) => sum + Number(ex.duration), 0);
+    const avgSleepHours = sleepLogs.length > 0 
+      ? sleepLogs.reduce((sum, log) => sum + Number(log.hours_slept), 0) / sleepLogs.length 
+      : 0;
 
     // Build context for AI
-    const contextInfo = profile ? `
-User Profile Context:
-- Name: ${profile.name || 'User'}
-- Age: ${profile.age || 'Not set'}, Gender: ${profile.gender || 'Not set'}
-- Current Weight: ${profile.weight || 'Not set'}kg, Height: ${profile.height || 'Not set'}cm
-- Fitness Goal: ${profile.goal || 'Not set'}
-- Activity Level: ${profile.activity_level || 'Not set'}
-- Daily Calorie Goal: ${profile.daily_calorie_goal || 'Not set'} calories
-` : '';
+    const contextInfo = `
+User Profile:
+- Name: ${profile?.name || 'User'}
+- Age: ${profile?.age || 'Not set'}, Gender: ${profile?.gender || 'Not set'}
+- Current Weight: ${profile?.weight || 'Not set'}kg, Height: ${profile?.height || 'Not set'}cm
+- Fitness Goal: ${profile?.goal || 'Not set'}
+- Activity Level: ${profile?.activity_level || 'Not set'}
+- Daily Calorie Goal: ${profile?.daily_calorie_goal || 'Not set'} calories
 
-    const systemPrompt = `You are an expert fitness coach and goal-setting specialist. Analyze the user's input and their profile data to create:
+Recent Activity (Last 7 Days):
+- Meals Logged: ${meals.length} meals (Total: ${totalCalories.toFixed(0)} calories, ${totalProtein.toFixed(0)}g protein)
+- Exercises: ${exercises.length} sessions (Total: ${totalExerciseMinutes} minutes)
+- Sleep: ${sleepLogs.length} entries (Average: ${avgSleepHours.toFixed(1)} hours/night)
 
-1. A concise summary of their current situation
-2. Specific, measurable, achievable, relevant, and time-bound (SMART) goals
-3. An actionable step-by-step plan to achieve those goals
-4. Key metrics to track progress
-5. Motivational encouragement
+Detailed Logs:
+${meals.length > 0 ? `\nRecent Meals:\n${meals.slice(0, 5).map(m => `- ${m.meal_name}: ${m.calories} cal, ${m.protein}g protein (${new Date(m.consumed_at).toLocaleDateString()})`).join('\n')}` : ''}
+${exercises.length > 0 ? `\n\nRecent Exercises:\n${exercises.slice(0, 5).map(e => `- ${e.exercise_name}: ${e.duration} min, ${e.calories_burnt} cal (${e.exercise_date})`).join('\n')}` : ''}
+${sleepLogs.length > 0 ? `\n\nRecent Sleep:\n${sleepLogs.slice(0, 5).map(s => `- ${s.hours_slept} hours, Quality: ${s.sleep_quality || 'Not rated'} (${s.sleep_date})`).join('\n')}` : ''}
+`;
+
+    const systemPrompt = `You are an expert fitness coach and goal-setting specialist. Analyze the user's actual fitness data and profile to create:
+
+1. A concise summary of their current progress and patterns
+2. Specific insights based on their logged data
+3. Specific, measurable, achievable, relevant, and time-bound (SMART) goals
+4. An actionable step-by-step plan to achieve those goals
+5. Key areas for improvement based on their data
+6. Motivational encouragement based on their efforts
 
 ${contextInfo}
 
-User's Input:
-${userInput}
-
-Provide a well-structured, personalized response that is encouraging, realistic, and actionable. Format your response clearly with sections and bullet points where appropriate.`;
+Provide a well-structured, personalized response that is encouraging, realistic, and actionable. Format your response clearly with sections and bullet points where appropriate. Be specific and reference their actual data.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
