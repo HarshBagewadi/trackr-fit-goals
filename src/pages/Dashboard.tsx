@@ -166,12 +166,6 @@ export default function Dashboard() {
             <ProfileOnboarding userId={user.id} onComplete={handleOnboardingComplete} />
           ) : (
             <div className="grid gap-6">
-              {/* Achievements Section */}
-              <AchievementsBadges userId={user.id} />
-
-              {/* Weekly Progress Chart */}
-              <WeeklyProgressChart userId={user.id} />
-
               {/* Motivational Quote */}
               <MotivationalQuotes />
 
@@ -201,7 +195,21 @@ export default function Dashboard() {
         </div>
       </main>
       
-      {isProfileComplete && <GoalSummaryFooter />}
+      {isProfileComplete && (
+        <>
+          <GoalSummaryFooter />
+          
+          <div className="container mx-auto px-4 py-8">
+            <div className="space-y-6">
+              {/* Achievements Section */}
+              <AchievementsBadges userId={user.id} />
+
+              {/* Weekly Progress Chart */}
+              <WeeklyProgressChart userId={user.id} />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
