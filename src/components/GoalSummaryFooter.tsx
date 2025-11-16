@@ -14,8 +14,88 @@ export function GoalSummaryFooter() {
   const { toast } = useToast();
 
   useEffect(() => {
-    checkUserData();
-  }, []);
+    const setupSubscriptions = async () => {
+      checkUserData();
+      
+      // Set up realtime subscriptions to auto-check when new data is logged
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const mealsChannel = supabase
+        .channel('meals_for_summary')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'meals',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => {
+            checkUserData();
+            if (summary) {
+              toast({
+                title: "New data logged",
+                description: "Click 'Generate Summary' to update your progress analysis.",
+              });
+            }
+          }
+        )
+        .subscribe();
+
+      const exercisesChannel = supabase
+        .channel('exercises_for_summary')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'exercises',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => {
+            checkUserData();
+            if (summary) {
+              toast({
+                title: "New data logged",
+                description: "Click 'Generate Summary' to update your progress analysis.",
+              });
+            }
+          }
+        )
+        .subscribe();
+
+      const sleepChannel = supabase
+        .channel('sleep_for_summary')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'sleep_logs',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => {
+            checkUserData();
+            if (summary) {
+              toast({
+                title: "New data logged",
+                description: "Click 'Generate Summary' to update your progress analysis.",
+              });
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(mealsChannel);
+        supabase.removeChannel(exercisesChannel);
+        supabase.removeChannel(sleepChannel);
+      };
+    };
+
+    setupSubscriptions();
+  }, [summary]);
 
   const checkUserData = async () => {
     try {

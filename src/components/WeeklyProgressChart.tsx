@@ -22,6 +22,55 @@ export function WeeklyProgressChart({ userId }: WeeklyProgressChartProps) {
 
   useEffect(() => {
     fetchWeeklyData();
+    
+    // Set up realtime subscriptions for data changes
+    const mealsChannel = supabase
+      .channel('meals_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'meals',
+          filter: `user_id=eq.${userId}`
+        },
+        () => fetchWeeklyData()
+      )
+      .subscribe();
+
+    const exercisesChannel = supabase
+      .channel('exercises_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'exercises',
+          filter: `user_id=eq.${userId}`
+        },
+        () => fetchWeeklyData()
+      )
+      .subscribe();
+
+    const sleepChannel = supabase
+      .channel('sleep_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sleep_logs',
+          filter: `user_id=eq.${userId}`
+        },
+        () => fetchWeeklyData()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(mealsChannel);
+      supabase.removeChannel(exercisesChannel);
+      supabase.removeChannel(sleepChannel);
+    };
   }, [userId]);
 
   const fetchWeeklyData = async () => {
