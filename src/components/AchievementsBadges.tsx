@@ -52,20 +52,23 @@ export function AchievementsBadges({ userId }: AchievementsBadgesProps) {
 
   useEffect(() => {
     fetchAchievements();
-    const channel = setupRealtimeSubscription();
+    const channels = setupRealtimeSubscriptions();
     return () => {
-      supabase.removeChannel(channel);
+      channels.forEach(channel => supabase.removeChannel(channel));
     };
   }, [userId]);
 
   useEffect(() => {
-    if (achievements.length > 0 && userAchievements.length > 0) {
+    if (achievements.length > 0) {
       checkForNewAchievements();
     }
-  }, []);
+  }, [achievements, userAchievements]);
 
-  const setupRealtimeSubscription = () => {
-    const channel = supabase
+  const setupRealtimeSubscriptions = () => {
+    const channels = [];
+    
+    // Listen for new user achievements
+    const achievementsChannel = supabase
       .channel('user_achievements_changes')
       .on(
         'postgres_changes',
@@ -90,7 +93,58 @@ export function AchievementsBadges({ userId }: AchievementsBadgesProps) {
       )
       .subscribe();
     
-    return channel;
+    channels.push(achievementsChannel);
+
+    // Listen for meals, exercises, and sleep logs to check achievements
+    const mealsChannel = supabase
+      .channel('meals_for_achievements')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'meals',
+          filter: `user_id=eq.${userId}`
+        },
+        () => checkForNewAchievements()
+      )
+      .subscribe();
+    
+    channels.push(mealsChannel);
+
+    const exercisesChannel = supabase
+      .channel('exercises_for_achievements')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'exercises',
+          filter: `user_id=eq.${userId}`
+        },
+        () => checkForNewAchievements()
+      )
+      .subscribe();
+    
+    channels.push(exercisesChannel);
+
+    const sleepChannel = supabase
+      .channel('sleep_for_achievements')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'sleep_logs',
+          filter: `user_id=eq.${userId}`
+        },
+        () => checkForNewAchievements()
+      )
+      .subscribe();
+    
+    channels.push(sleepChannel);
+    
+    return channels;
   };
 
   const fetchAchievements = async () => {
