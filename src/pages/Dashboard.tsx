@@ -9,6 +9,8 @@ import { MotivationalQuotes } from "@/components/MotivationalQuotes";
 import { HealthTips } from "@/components/HealthTips";
 import { FitnessChat } from "@/components/FitnessChat";
 import { GoalSummaryFooter } from "@/components/GoalSummaryFooter";
+import { WeeklyProgressChart } from "@/components/WeeklyProgressChart";
+import { AchievementsBadges } from "@/components/AchievementsBadges";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -164,6 +166,12 @@ export default function Dashboard() {
             <ProfileOnboarding userId={user.id} onComplete={handleOnboardingComplete} />
           ) : (
             <div className="grid gap-6">
+              {/* Achievements Section */}
+              <AchievementsBadges userId={user.id} />
+
+              {/* Weekly Progress Chart */}
+              <WeeklyProgressChart userId={user.id} />
+
               {/* Motivational Quote */}
               <MotivationalQuotes />
 
