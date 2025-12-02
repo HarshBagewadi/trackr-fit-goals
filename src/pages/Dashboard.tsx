@@ -9,8 +9,6 @@ import { MotivationalQuotes } from "@/components/MotivationalQuotes";
 import { HealthTips } from "@/components/HealthTips";
 import { FitnessChat } from "@/components/FitnessChat";
 import { GoalSummaryFooter } from "@/components/GoalSummaryFooter";
-import { WeeklyProgressChart } from "@/components/WeeklyProgressChart";
-import { AchievementsBadges } from "@/components/AchievementsBadges";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -195,21 +193,7 @@ export default function Dashboard() {
         </div>
       </main>
       
-      {isProfileComplete && (
-        <>
-          <GoalSummaryFooter />
-          
-          <div className="container mx-auto px-4 py-8">
-            <div className="space-y-6">
-              {/* Achievements Section */}
-              <AchievementsBadges userId={user.id} />
-
-              {/* Weekly Progress Chart */}
-              <WeeklyProgressChart userId={user.id} />
-            </div>
-          </div>
-        </>
-      )}
+      {isProfileComplete && <GoalSummaryFooter />}
     </div>
   );
 }

@@ -76,7 +76,7 @@ const Index = () => {
                 <Button 
                   variant="outline" 
                   size="xl" 
-                  className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10 backdrop-blur-sm"
+                  className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary backdrop-blur-sm"
                   onClick={() => {
                     document.querySelector('#features')?.scrollIntoView({ behavior: 'smooth' });
                   }}
