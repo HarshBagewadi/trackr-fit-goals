@@ -90,18 +90,22 @@ ${exercises.length > 0 ? `\n\nRecent Exercises:\n${exercises.slice(0, 5).map(e =
 ${sleepLogs.length > 0 ? `\n\nRecent Sleep:\n${sleepLogs.slice(0, 5).map(s => `- ${s.hours_slept} hours, Quality: ${s.sleep_quality || 'Not rated'} (${s.sleep_date})`).join('\n')}` : ''}
 `;
 
-    const systemPrompt = `You are an expert fitness coach and goal-setting specialist. Analyze the user's actual fitness data and profile to create:
-
-1. A concise summary of their current progress and patterns
-2. Specific insights based on their logged data
-3. Specific, measurable, achievable, relevant, and time-bound (SMART) goals
-4. An actionable step-by-step plan to achieve those goals
-5. Key areas for improvement based on their data
-6. Motivational encouragement based on their efforts
+    const systemPrompt = `You are an expert fitness coach. Analyze the user's data and provide a SHORT, POWERFUL summary.
 
 ${contextInfo}
 
-Provide a well-structured, personalized response that is encouraging, realistic, and actionable. Format your response clearly with sections and bullet points where appropriate. Be specific and reference their actual data.`;
+RESPONSE FORMAT (keep it punchy, max 150 words total):
+
+📊 **This Week's Snapshot**
+[2-3 bullet points with key stats and trends]
+
+🎯 **Focus Areas**
+[2-3 specific, actionable items based on their data]
+
+💪 **Quick Win**
+[1 immediate action they can take today]
+
+Be direct, use their actual numbers, skip the fluff. No long explanations.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");

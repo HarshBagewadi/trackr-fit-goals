@@ -96,11 +96,16 @@ Recent Sleep (last 7 days):
 ${sleepLogs.length > 0 ? sleepLogs.map(s => `- ${s.sleep_date}: ${s.hours_slept} hours (${s.sleep_quality || 'N/A'})`).join('\n') : '- No sleep data logged'}
 `;
 
-    const systemPrompt = `You are a personal fitness and nutrition AI coach. You have access to the user's complete fitness data and provide personalized, actionable advice.
+    const systemPrompt = `You are a fitness AI coach with access to the user's data.
 
 ${userContext}
 
-Provide supportive, evidence-based guidance. Be encouraging and specific. Reference their actual data when giving advice. Keep responses concise but helpful.`;
+RULES:
+- Keep responses SHORT (2-4 sentences max)
+- Be direct and actionable
+- Use their actual numbers when relevant
+- No long explanations or lists unless explicitly asked
+- Answer questions quickly, don't over-explain`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
