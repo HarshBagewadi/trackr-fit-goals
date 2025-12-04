@@ -9,6 +9,7 @@ import { MotivationalQuotes } from "@/components/MotivationalQuotes";
 import { HealthTips } from "@/components/HealthTips";
 import { FitnessChat } from "@/components/FitnessChat";
 import { GoalSummaryFooter } from "@/components/GoalSummaryFooter";
+import { DashboardFooter } from "@/components/DashboardFooter";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -194,6 +195,7 @@ export default function Dashboard() {
       </main>
       
       {isProfileComplete && <GoalSummaryFooter />}
+      <DashboardFooter />
     </div>
   );
 }
